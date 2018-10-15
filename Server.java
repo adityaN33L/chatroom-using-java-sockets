@@ -8,24 +8,24 @@ public class Server{
     public static HashMap<String,List<String> > chatRoom2Users = new HashMap<String,List<String> >();
     
     public static void main(String[] args) throws IOException{
-    	int clients = Integer.parseInt(args[0]);
-    	String server_ip = args[1];
-    	int server_port = Integer.parseInt(args[2]);
+        int clients = Integer.parseInt(args[0]);
+        String server_ip = args[1];
+        int server_port = Integer.parseInt(args[2]);
 
         ServerSocket ss = new ServerSocket(server_port);
         System.out.println("Server online...");
         while(true){
             Socket s = null;
             try{
-            	if(clients >= 0){
-            		s = ss.accept();
-            		clients--;	
-            		DataInputStream dis = new DataInputStream(s.getInputStream());
-            		DataOutputStream dos = new DataOutputStream(s.getOutputStream());
-            		Scanner scn = new Scanner(System.in);
-            		Thread t = new ClientHandler(s,dis,dos,scn,user2Socket,user2ChatRoom,chatRoom2Users,clients);
-            		t.start();	
-            	}        		 
+                if(clients >= 0){
+                    s = ss.accept();
+                    clients--;  
+                    DataInputStream dis = new DataInputStream(s.getInputStream());
+                    DataOutputStream dos = new DataOutputStream(s.getOutputStream());
+                    Scanner scn = new Scanner(System.in);
+                    Thread t = new ClientHandler(s,dis,dos,scn,user2Socket,user2ChatRoom,chatRoom2Users,clients);
+                    t.start();  
+                }                
             }
             catch(Exception e){
                 s.close();
@@ -60,18 +60,18 @@ class ClientHandler extends Thread{
 
     public void run(){
 
-    	try{
-	    	if(clients < 0) {
-	    		dos.writeUTF("No more clients can be accepted...");
-	    		this.s.close();
-	    		return;
-	    	}	
-    	}
-    	catch (IOException e) {
+        try{
+            if(clients < 0) {
+                dos.writeUTF("No more clients can be accepted...");
+                this.s.close();
+                return;
+            }   
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
-    	
-    	
+        
+        
         while(true){
             try{
                 strRcvd = dis.readUTF();
@@ -119,7 +119,7 @@ class ClientHandler extends Thread{
                         listChatRooms += key + ", ";
 
                     if(!listChatRooms.equals(""))
-                    	listChatRooms = listChatRooms.substring(0, listChatRooms.length() - 2);
+                        listChatRooms = listChatRooms.substring(0, listChatRooms.length() - 2);
                     dos.writeUTF("List of chat rooms: " + listChatRooms);   
                 }
 
@@ -211,10 +211,10 @@ class ClientHandler extends Thread{
                 //------------------------------------- Add new user to chatroom -------------------------------//
 
                 else if(splitedMessage[0].equals("add")){
-                	if(user2ChatRoom.get(username) == null){
-                		dos.writeUTF("You cannot add a member unless you are a member of some group...");
-                		continue;
-                	}
+                    if(user2ChatRoom.get(username) == null){
+                        dos.writeUTF("You cannot add a member unless you are a member of some group...");
+                        continue;
+                    }
                     String newuser = splitedMessage[1];
                     if(!user2Socket.containsKey(newuser)){
                         dos.writeUTF(newuser + " is offline...");
@@ -244,98 +244,98 @@ class ClientHandler extends Thread{
 
                 else if(splitedMessage[0].equals("FileAttributes:")){
 
-					int filesize = Integer.parseInt(splitedMessage[1]);
-					String filename = splitedMessage[2];
-					String protocol = splitedMessage[3];
+                    int filesize = Integer.parseInt(splitedMessage[1]);
+                    String filename = splitedMessage[2];
+                    String protocol = splitedMessage[3];
 
-					int current = 0, tillNow = 0;
-					String destFile = System.getProperty("user.dir") + "/" + filename;
-					byte [] mybytearray  = new byte [6022386];
-			        InputStream is = s.getInputStream();
-			        FileOutputStream fos = new FileOutputStream(destFile);
-			        BufferedOutputStream bos = new BufferedOutputStream(fos);
-			        
-		        	while ((current = is.read(mybytearray)) > 0) {
-			        	bos.write(mybytearray, 0, current);
-			        	tillNow += current;
-			        	if(tillNow >= filesize)
-			        		break;
-			        }
-		        	bos.flush();
-		        	bos.close();
+                    int current = 0, tillNow = 0;
+                    String destFile = System.getProperty("user.dir") + "/" + filename;
+                    byte [] mybytearray  = new byte [6022386];
+                    InputStream is = s.getInputStream();
+                    FileOutputStream fos = new FileOutputStream(destFile);
+                    BufferedOutputStream bos = new BufferedOutputStream(fos);
+                    
+                    while ((current = is.read(mybytearray)) > 0) {
+                        bos.write(mybytearray, 0, current);
+                        tillNow += current;
+                        if(tillNow >= filesize)
+                            break;
+                    }
+                    bos.flush();
+                    bos.close();
 
 
-		        	List<Socket> memberSockets = new ArrayList<Socket>();
-					List<String> userlist = chatRoom2Users.get(chatroom);
+                    List<Socket> memberSockets = new ArrayList<Socket>();
+                    List<String> userlist = chatRoom2Users.get(chatroom);
 
-					l = userlist.size();
-					for(i = 0;i < l;i++){
-						String member = userlist.get(i);
-						if(member == username)
-							continue;
-						memberSockets.add(user2Socket.get(member));
-					}
-					l--;					
+                    l = userlist.size();
+                    for(i = 0;i < l;i++){
+                        String member = userlist.get(i);
+                        if(member == username)
+                            continue;
+                        memberSockets.add(user2Socket.get(member));
+                    }
+                    l--;                    
 
-					String filepath = System.getProperty("user.dir") + "/" + filename;
+                    String filepath = System.getProperty("user.dir") + "/" + filename;
                     File myFile = new File (filepath);
                     DataOutputStream dosNew = null;
                     String fileAttributes = "FileAttributes: " + Long.toString(myFile.length()) + " " + filename + " " +protocol + " " + username;
 
                     for(i = 0;i<l;++i){    
-                    	Socket sockInfo = memberSockets.get(i);
+                        Socket sockInfo = memberSockets.get(i);
                         dosNew = new DataOutputStream(sockInfo.getOutputStream());
-                        dosNew.writeUTF(fileAttributes);	
-                        dosNew.flush();               	
-	        
-	        			mybytearray  = new byte [(int)myFile.length()];
-						FileInputStream fis = new FileInputStream(myFile);
-						BufferedInputStream bis = new BufferedInputStream(fis);
-						bis.read(mybytearray,0,mybytearray.length);
-						OutputStream os = sockInfo.getOutputStream();
-						os.write(mybytearray,0,mybytearray.length);
-						os.flush();
-						bis.close();
+                        dosNew.writeUTF(fileAttributes);    
+                        dosNew.flush();                 
+            
+                        mybytearray  = new byte [(int)myFile.length()];
+                        FileInputStream fis = new FileInputStream(myFile);
+                        BufferedInputStream bis = new BufferedInputStream(fis);
+                        bis.read(mybytearray,0,mybytearray.length);
+                        OutputStream os = sockInfo.getOutputStream();
+                        os.write(mybytearray,0,mybytearray.length);
+                        os.flush();
+                        bis.close();
                     }
                     myFile.delete();
-				}                
+                }                
 
                 //------------------------------- valid message to be broadcasted in the group --------------------------//
 
                 else if(splitedMessage[0].equals("reply")){
 
-                	int msgLen = splitedMessage.length;
-					String protocol = splitedMessage[msgLen-1];
-					
-					chatroom = user2ChatRoom.get(username);
-					if(chatroom == null){
-					    dos.writeUTF("You are not member of any chatroom...");
-					    continue;
-					}
-					List<Socket> memberSockets = new ArrayList<Socket>();
-					List<String> userlist = chatRoom2Users.get(chatroom);
+                    int msgLen = splitedMessage.length;
+                    String protocol = splitedMessage[msgLen-1];
+                    
+                    chatroom = user2ChatRoom.get(username);
+                    if(chatroom == null){
+                        dos.writeUTF("You are not member of any chatroom...");
+                        continue;
+                    }
+                    List<Socket> memberSockets = new ArrayList<Socket>();
+                    List<String> userlist = chatRoom2Users.get(chatroom);
 
-					l = userlist.size();
-					for(i = 0;i < l;i++){
-						String member = userlist.get(i);
-						if(member == username)
-							continue;
-						memberSockets.add(user2Socket.get(member));
-					}
-					l--;
-					// simple message to be broadcasted in the chatroom
-					if(!protocol.equals("tcp") && !protocol.equals("udp")){
-						splitedMessage[0] = username + ":";
-						String msg2All = String.join(" ", splitedMessage);
-					    DataOutputStream dosNew = null;
-					    
-					    for(i = 0;i < l;++i){
-					        Socket sockInfo = memberSockets.get(i);
-					        dosNew = new DataOutputStream(sockInfo.getOutputStream());
-					        dosNew.writeUTF(msg2All);
-					        dosNew.flush();
-					    }
-					}
+                    l = userlist.size();
+                    for(i = 0;i < l;i++){
+                        String member = userlist.get(i);
+                        if(member == username)
+                            continue;
+                        memberSockets.add(user2Socket.get(member));
+                    }
+                    l--;
+                    // simple message to be broadcasted in the chatroom
+                    if(!protocol.equals("tcp") && !protocol.equals("udp")){
+                        splitedMessage[0] = username + ":";
+                        String msg2All = String.join(" ", splitedMessage);
+                        DataOutputStream dosNew = null;
+                        
+                        for(i = 0;i < l;++i){
+                            Socket sockInfo = memberSockets.get(i);
+                            dosNew = new DataOutputStream(sockInfo.getOutputStream());
+                            dosNew.writeUTF(msg2All);
+                            dosNew.flush();
+                        }
+                    }
                 }
 
                 //--------------------------------- client exiting -------------------------------------//
@@ -351,7 +351,7 @@ class ClientHandler extends Thread{
                 //--------------------------------- Invalid Command ---------------------------------//
 
                 else
-                	dos.writeUTF("Invalid command...");
+                    dos.writeUTF("Invalid command...");
 
             }
             catch (IOException e) {
